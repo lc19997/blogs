@@ -1,0 +1,53 @@
+baseURL = "https://quasilyte.github.io/blog/"
+languageCode = "en-us"
+
+title = "Iskander Sharipov technical blog"
+theme = "hugo-steam-theme"
+
+disqusShortname = ""
+googleAnalytics = ""
+
+# Number of posts per page
+paginate = 10
+
+[[menu.main]]
+    name = "[Posts by tags]"
+    weight = 10
+    identifier = "tags"
+    url = "/tags/"
+
+[params]
+	title = "Quasilyte blog"
+	subtitle = "**defun** and **define** live here in harmony"
+	copyright = "Released under the MIT license."
+
+	# You can choose between green, orange, red and blue.
+	themecolor = "green"
+
+	# Link custom assets relative to /static
+	favicon   = "favicon.ico"
+	customCSS = []
+	customJS  = []
+
+	# To provide some metadata for search engines and the about section in the footer
+	# feel free to add a few information about you and your website.
+	name = "Iskander Sharipov"
+	bio = "Lisper that lost in a gophers land"
+	description = "Technical blog about programming and related topics"
+	
+	# Link your social networks (optional)
+	location = ""
+	twitter = ""
+	linkedin = "quasilyte"
+	googleplus = ""
+	facebook = ""
+	instagram = ""
+	github = "quasilyte"
+	gitlab = ""
+	bitbucket = ""
+
+	# Customize or translate the strings
+	keepReadingStr = ""
+	backtotopStr = "Back to top"
+	shareStr = "Share"
+	pageNotFoundTitle = "404 - Page not found"
