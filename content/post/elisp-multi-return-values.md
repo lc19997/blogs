@@ -67,7 +67,8 @@ store results inside private global variable.
 ## List vs vector
 
 The choice between `vector` and `list` is not easy, 
-especially if you know Emacs bytecode.
+especially if you know
+[Emacs bytecode](https://www.emacswiki.org/emacs/ByteCodeEngineering).
 
 First operation we care about is **return efficiency**.
 To make multi value return, preallocated list/vector 
@@ -126,18 +127,27 @@ Note that used list is not **proper list**. The last `cdr` is not `nil`.
 
 At `N=3` vector and list are nealy equal in efficiency, `N=4` favors vectors.
 List becomes less and less efficient as the `N` grows.
-
 In my experience 2-value returns cover 90% of cases.
 This means that list is a winner here.
 
-## Not list, nor vector?
+Another thing worth considering is ability to discard some
+of the return values. In **Go** you can do `a, _, c := f()` 
+which assigns 1st and 3rd returned values; 2nd value is ignored.
+Generally, lists are slower here because you still need to
+traverse ignored elements. 
+
+Next section describes another implementation option which
+is a good compromise between list and vector in terms of 
+{return/assign/discard} operations perfomance.
+
+## Neither list, nor vector?
 
 It is possible to avoid lists and vectors completely.
 
 For each **additional** return value it is possible to use
-single global variable. 
+single global variable.
 
-First value is returned as usual, while others 
+First value is returned as usual, while others
 use `varset` (setq) to bind additional data.
 On the caller side, function result is bound to
 the first variable; other variables read from
@@ -145,7 +155,7 @@ corresponding global variables.
 
 ```lisp
 ;; Return "a", "b", "c":
-(progn 
+(progn
   (setq mv--3 "c")
   (setq mv--2 "b")
   "a")
@@ -192,6 +202,11 @@ presented in previous section.
 [Full mv-lib implementation](/blog/code/mv-lib.el). 
 
 ```lisp
+;; Bind multiple values with some of them being ignored.
+(mv-let (a _ b _) (mv-ret 1 2 3 4)
+  (+ a b)) ;; => 4
+
+;; Compare with `cl-lib'.
 (let ((lexical-binding t))
   (benchmark-run-compiled 1000000
     (mv-let (a b c) (mv-ret 1 2 3)
@@ -199,7 +214,13 @@ presented in previous section.
 ;; 0 GC runs!
 ```
 
-Multitple values return with zero allocations achieved.
+> Multitple values return with zero allocations achieved
+
+Each `_` bind variable does not produce any code,
+they truly ignore the result.
+Important exception is the first binding. It can not 
+discard the bound expression because it has side-effect
+of setting rest return values.
 
 ## Why I prefer Go.el
 

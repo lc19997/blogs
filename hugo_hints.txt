@@ -1,0 +1,5 @@
+run server:
+hugo server --theme=hugo-steam-theme --buildDrafts
+
+build site:
+hugo --theme=hugo-steam-theme
