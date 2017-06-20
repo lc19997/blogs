@@ -1,4 +1,4 @@
-Sources that are used to build https://github.com/Quasilyte/quasilyte.github.io.
+Sources that are used to build https://github.com/Quasilyte/quasilyte.github.io.  
 The site itself can be found here: https://quasilyte.github.io/blog/.
 
 Some information:
