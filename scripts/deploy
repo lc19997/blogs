@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ -z "${BLOG_DEPLOY_REPO}" ]; then
+    echo '[ERROR] $BLOG_DEPLOY_REPO is undefined'
+    exit 1
+fi
+
+echo ' ... building site' &&
+    hugo --theme=hugo-steam-theme &&
+    echo ' ... copying files' &&
+    cd './public' &&
+    cp -a './' "${BLOG_DEPLOY_REPO}/" &&
+    echo '[OK] done'
