@@ -10,4 +10,5 @@ echo ' ... building site' &&
     echo ' ... copying files' &&
     cd './public' &&
     cp -a './' "${BLOG_DEPLOY_REPO}/" &&
+    cd ../ &&
     echo '[OK] done'
