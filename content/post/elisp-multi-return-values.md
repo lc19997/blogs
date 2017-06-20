@@ -3,7 +3,7 @@ date = "2017-05-19"
 title = "Emacs Lisp multi return values"
 tags = [
     "[emacs lisp]",
-    "[Go.el project]",
+    "[goism project]",
     "[performance]",
 ]
 description = "Efficient Go style multi return values in Emacs Lisp."
@@ -222,7 +222,7 @@ Important exception is the first binding. It can not
 discard the bound expression because it has side-effect
 of setting rest return values.
 
-## Why I prefer Go.el
+## Why I prefer goism
 
 Macro can help a lot with many features, but what about 
 packages or namespaces? 
@@ -234,8 +234,8 @@ internal linkage and opaque pointers.
 Everyone understand complications that arise with modules 
 for Emacs. Luckily, there is another way.
 Some languages already have modules.
-With [Go.el](https://github.com/Quasilyte/Go.el) it is possible
+With [goism](https://github.com/Quasilyte/goism) it is possible
 to write **Go** code that is translated into **Emacs Lisp**.
 
-As a bonus, when **Go.el** will be complete, we could
+As a bonus, when **goism** will be complete, we could
 use **Go** libraries inside Emacs. 
