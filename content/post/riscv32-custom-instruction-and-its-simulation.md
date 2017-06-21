@@ -35,8 +35,9 @@ The final result is very rewarding, I promise.
 
 Choose installation directory. Call it `RISCV`.
 
+Add these lines to your `~/.bashrc`:
+
 ```bash
-    # ~/.bashrc
     # Directory which will contain everything we need.
 export RISCV_HOME=~/riscv-home
     # $RISCV will point to toolchain install location.
@@ -44,31 +45,13 @@ export RISCV="${RISCV_HOME}/riscv"
 export PATH="${PATH}:${RISCV}/bin"
 ```
 
-Go to that directory and clone all required repositories.
-The process may take more than a hour; you may want to download
-them in parallel.
+Run `mkdir -p "${RISCV_HOME}" "${RISCV}"`.
 
-```bash
-mkdir -p "${RISCV_HOME}" "${RISCV}"
-cd $RISCV
-    # RISC-V frontend server. Needed for spike simulator.
-git clone https://github.com/riscv/riscv-fesvr
-    # Proxy kernel. Needed for spike simulator.
-git clone https://github.com/riscv/riscv-pk
-    # The spike itself.
-git clone https://github.com/riscv/riscv-isa-sim
-    # Useful helper package. Makes it easier to add a new opcode.
-git clone https://github.com/riscv/riscv-opcodes
-    # "riscv-opcodes" expects "riscv-tests" to be present in $RISCV_HOME.
-git clone https://github.com/riscv/riscv-tests.git
-    # This will take awhile... The longest step.
-    # Toolchain contains riscv ports of binutils, GCC and more.
-git clone git clone --recursive https://github.com/riscv/riscv-gnu-toolchain
-```
+Use [1_install/2_download-repos](https://github.com/Quasilyte/gnu-riscv32_ext/blob/master/1_install/2_download-repos) script to clone all required repositories.
 
 If you wish to save some time and traffic, avoid recursive clone of
 toolchain repository. Instead, clone sub-modules by hand.
-You may exclude "riscv-glibc". Not sure about "riscv-dejagnu" though.  
+You may exclude "riscv-glibc".
 
 > Be warned: I have not tested partial toolchain build, caveat emptor
 
@@ -239,7 +222,25 @@ funct7 (31..25=1)
 
 <img src="/blog/img/reg_table.png">
 
-## Adding "mac" intrinsic to the GCC
+## Plugin vs patch
+
+There are two ways to extend GCC:
+
+1. Patch GCC itself
+2. Write loadable plugin for GCC
+
+Prefer plugins to GCC patches whenever possible.  
+GCC wiki ["plugins"](https://gcc.gnu.org/wiki/plugins) page described
+advantages in the "Background" section.
+
+In this guide, both methods will be covered.
+
+Useful links:
+
+- [Simple GCC plugin](http://thinkingeek.com/2015/08/16/a-simple-plugin-for-gcc-part-1/) series of posts
+- [GCC plugins manual](https://gcc.gnu.org/onlinedocs/gccint/Plugins.html#Plugins)
+
+## GCC "rv32imMac" plugin
 
 **TODO**
 
