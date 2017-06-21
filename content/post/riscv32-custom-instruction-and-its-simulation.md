@@ -7,6 +7,7 @@ tags = [
     "[risc-v]",
     "[tutorial]",
     "[hardcore]",
+    "[compilers]",
 ]
 description = "Trying to enumerate what C defaults are wrong."
 draft = false
@@ -188,7 +189,55 @@ If result differs, `riscv32-unknown-elf-gdb` can help you in troubleshooting.
 
 ## Mac encoding explained
 
-**TODO**
+Be sure to look at [official specifications](https://riscv.org/specifications/) if
+you aim for precise descriptions.
+
+`mac` will mimic `mul` encoding, but use different opcode.
+
+```ruby
+# file "riscv-opcodes/opcodes"
+#                                differs
+#                                |
+#                                v
+mac rd rs1 rs2 31..25=1 14..12=0 6..2=0x1A 1..0=3
+mul rd rs1 rs2 31..25=1 14..12=0 6..2=0x0C 1..0=3
+#   ^  ^   ^   ^        ^        ^         ^
+#   |  |   |   |        |        |         |
+#   |  |   |   |        |        |         |
+#   |  |   |   |        |        |         also opcode 3 bits
+#   |  |   |   |        |        opcode 5 bits
+#   |  |   |   |        funct3 3 bits
+#   |  |   |   funct7 7 bits
+#   |  |   rs2 (src2) 5 bits
+#   |  rs1 (src1) 5 bits
+#   dest 5 bits
+```
+
+Actual encoding has different order of components and opcode is
+really single 7 bit segment. 
+
+> 5 bits per register operand means that we have 32 addressable registers.
+
+```ruby
+# Encoding used for "mac a0, a1, a2"
+0x02C5856B [base 16]
+==
+10110001011000010101101011 [base 2]
+== 
+00000010110001011000010101101011 [base 2]
+# Group by related bit chunks:
+0000001 01100 01011 000 01010 1101011
+^       ^     ^     ^   ^     ^
+|       |     |     |   |     |
+|       |     |     |   |     opcode (6..2=0x0C 1..0=3)
+|       |     |     |   dest (10 : a0)
+|       |     |     funct3 (14..12=0)
+|       |     src1 (11 : a1)
+|       src2 (12 : a2)
+funct7 (31..25=1)
+```
+
+<img src="/blog/img/reg_table.png">
 
 ## Adding "mac" intrinsic to the GCC
 
