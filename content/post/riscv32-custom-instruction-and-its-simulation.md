@@ -244,7 +244,7 @@ Useful links:
 
 **TODO**
 
-## Mac GIMPLE statement
+## GIMPLE "gmac" statement
 
 **TODO**
 
