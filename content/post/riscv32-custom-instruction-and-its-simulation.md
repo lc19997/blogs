@@ -9,7 +9,7 @@ tags = [
     "[hardcore]",
     "[compilers]",
 ]
-description = "Trying to enumerate what C defaults are wrong."
+description = "Implementing and simulating a new RISC-V instruction with GNU toolchain"
 draft = false
 +++
 
