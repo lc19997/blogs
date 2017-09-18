@@ -16,6 +16,18 @@ paginate = 10
     identifier = "tags"
     url = "/tags/"
 
+[[menu.main]]
+    name = "[Subscribe]"
+    weight = 10
+    identifier = "subscribe"
+    url = "/post/faq/#subscribe"
+
+[[menu.main]]
+    name = "[Report an issue]"
+    weight = 10
+    identifier = "fire_issue"
+    url = "/post/faq/#report-an-issue"
+
 [params]
 	title = "Quasilyte blog"
 	subtitle = "**defun** and **define** live here in harmony"
