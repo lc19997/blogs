@@ -4,6 +4,7 @@ title = "Path to convenient C FFI in Go"
 tags = [
     "[go]",
     "[cgo]",
+    "[c]",
     "[ffi]",
     "[reflection]",
 ]
