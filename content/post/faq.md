@@ -16,7 +16,7 @@ If you:
 
 ... or you looking for a way to contact author,
 
-just [fire an Github issue](https://github.com/Quasilyte/blog-src/issues/new).
+just [open new Github issue](https://github.com/Quasilyte/blog-src/issues/new).
 
 Try to be polite and precise in your words, please.
 
