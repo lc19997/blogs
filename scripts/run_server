@@ -1,0 +1,3 @@
+#!/bin/bash
+
+hugo server --theme=hugo-steam-theme --buildDrafts
