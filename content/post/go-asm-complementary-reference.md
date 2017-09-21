@@ -85,6 +85,32 @@ official manual{2}:
 > "The order of operands is from left to right in dataflow order,
 > just as on the 68020 but not as in MIPS documentation."
 
+## Register operand rules
+
+Before showing divergent instruction names, important part of
+official manual{2} should be quoted and explained.
+
+> All registers are 64 bit, but instructions access low-order 8, 16 and 32 bits 
+> as described in the processor handbook. 
+> For example, MOVL to AX puts a value in the low-order 32 bits 
+> and clears the top 32 bits to zero.
+
+Little snippet below will demonstrate the idea:
+
+```lisp
+Go        | AT&T
+================
+BSWAPW AX | BSWAP %ax
+BSWAPL AX | BSWAP %eax
+BSWAPQ AX | BSWAP %rax
+```
+
+When instruction supports multiple operand sizes,
+Plan9 assembly uses pseudo instructions like `BSWAP{W,L,Q}` above,
+that specify operand size.
+
+The next two sections should be easier to grasp with this knowledge.
+
 ## Mnemonics
 
 Many mnemonics are different from AT&T.
