@@ -433,7 +433,7 @@ You can control that with `GOARCH`{3} environment variable.
 2. Immediate operands are typed. They can be either signed or unsigned. You can not use negative constant arguments for instruction if it has "unsigned" immediate restriction.  
    [Proposal 21528](https://github.com/golang/go/issues/21528) has discussion on related subject.
 
-## Expect even more differences in future
+## Expect even more differences in the future
 
 Go (1.9) assembler does not support AVX512 yet.
 There is no syntax support for masking registers.
