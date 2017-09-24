@@ -267,3 +267,6 @@ The simplified version can look like this:
 
 With such `%defun`, users can get `%return` transparently,
 no explicit compilation is needed.
+
+If are looking for more practical examples where `return` is useful,
+check out [bool-listp.el](/blog/code/bool-listp.el).
