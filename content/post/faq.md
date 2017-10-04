@@ -1,5 +1,5 @@
 +++
-date = "1990-01-01"
+date = "2016-12-01"
 title = "FAQ"
 tags = []
 description = "This blog FAQ."
