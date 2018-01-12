@@ -432,4 +432,4 @@ This is "further reading" section.
 - [2] [Manual for the Plan 9 assembler](https://9p.io/sys/doc/asm.html) by Rob Pike.
 - [Quick Guide to Go's Assembler](https://golang.org/doc/asm) from go docs.
 - [3] [Go build docs: environment variables](https://golang.org/doc/install/source#environment).
-- [4] [AVX512 design](https://github.com/golang/go/issues/22779#issuecomment-345435884).
+- [4] [AVX512 design](https://github.com/golang/go/issues/22779).
