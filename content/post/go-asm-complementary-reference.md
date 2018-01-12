@@ -31,6 +31,14 @@ In this document:
 Check [external resources](#external-resources) for information
 that is missing here.
 
+## How to use this
+
+Most information is presented in table-like format.  
+It's optimized for `ctrl+f` search over the page.
+
+When you see {n} inside the text -- look into [external resources](#external-resources)
+section.
+
 ## Operands order
 
 Go assembly may resemble AT&T assembly,
@@ -117,6 +125,8 @@ Many mnemonics are different from AT&T.
 
 With the exception of `RETFW/RETFL/RETFQ` (far ret),
 instruction names differ in suffixes only.
+
+AVX instructions all have Intel names. That is, we have `VADDPD` rather than `VADDPL`.
 
 > The names of conditions in all conditional instructions (J, SET) 
 > follow the conventions of the 68020 instead of those of the Intel assembler
@@ -278,58 +288,31 @@ PUNPCKLLQ  | PUNPCKLDQ  | xmm2/m128, xmm1
 PUNPCKLWL  | PUNPCKLWD  | mm2/m32, mm1
 PUNPCKLWL  | PUNPCKLWD  | xmm2/m128, xmm1
 SETHI      | SETA       | r/m8
-SETHI      | SETA       | r/m8
-SETCC      | SETAE      | r/m8
 SETCC      | SETAE      | r/m8
 SETCS      | SETB       | r/m8
-SETCS      | SETB       | r/m8
-SETLS      | SETBE      | r/m8
 SETLS      | SETBE      | r/m8
 SETCS      | SETC       | r/m8
-SETCS      | SETC       | r/m8
-SETEQ      | SETE       | r/m8
 SETEQ      | SETE       | r/m8
 SETGT      | SETG       | r/m8
-SETGT      | SETG       | r/m8
-SETLT      | SETL       | r/m8
 SETLT      | SETL       | r/m8
 SETLS      | SETNA      | r/m8
-SETLS      | SETNA      | r/m8
-SETCS      | SETNAE     | r/m8
 SETCS      | SETNAE     | r/m8
 SETCC      | SETNB      | r/m8
-SETCC      | SETNB      | r/m8
-SETHI      | SETNBE     | r/m8
 SETHI      | SETNBE     | r/m8
 SETCC      | SETNC      | r/m8
-SETCC      | SETNC      | r/m8
-SETLE      | SETNG      | r/m8
 SETLE      | SETNG      | r/m8
 SETLT      | SETNGE     | r/m8
-SETLT      | SETNGE     | r/m8
-SETGE      | SETNL      | r/m8
 SETGE      | SETNL      | r/m8
 SETGT      | SETNLE     | r/m8
-SETGT      | SETNLE     | r/m8
-SETOC      | SETNO      | r/m8
 SETOC      | SETNO      | r/m8
 SETPC      | SETNP      | r/m8
-SETPC      | SETNP      | r/m8
-SETPL      | SETNS      | r/m8
 SETPL      | SETNS      | r/m8
 SETNE      | SETNZ      | r/m8
-SETNE      | SETNZ      | r/m8
-SETOS      | SETO       | r/m8
 SETOS      | SETO       | r/m8
 SETPS      | SETP       | r/m8
-SETPS      | SETP       | r/m8
-SETPS      | SETPE      | r/m8
 SETPS      | SETPE      | r/m8
 SETPC      | SETPO      | r/m8
-SETPC      | SETPO      | r/m8
 SETMI      | SETS       | r/m8
-SETMI      | SETS       | r/m8
-SETEQ      | SETZ       | r/m8
 SETEQ      | SETZ       | r/m8
 SHLW       | SHLDW      | CL, r16, r/m16
 SHLW       | SHLDW      | imm8, r16, r/m16
@@ -387,8 +370,11 @@ Tables below map AT&T <=> Go register names.
 %spl       <=> SPB
 %r8b-%r15b <=> R8B-R15B
 
-%xmm0-%xmm15 <=> X0-X15
-%ymm0-%ymm15 <=> Y0-Y15
+%xmm0-%xmm31 <=> X0-X31
+%ymm0-%ymm31 <=> Y0-Y31
+%zmm0-%zmm31 <=> Z0-Z31
+
+%k0-%k7 <=> K0-K7
 
 %st0-%st7 <=> F0-F7
 %mm0-%mm7 <=> M0-M7
@@ -405,15 +391,16 @@ Tables below map AT&T <=> Go register names.
 
 Notes:
 
-- No AVX512, only 16 `xmm` and `ymm` registers; no `zmm` registers;
+- High 16 `xmm`/`ymm`, all `zmm` and `k` registers are enabled in AVX512{4}
 - The exact count of defined `CR`, `DR` and `TR` register may vary (up to 16);
 
-**32-bit** and **64-bit** GPR depend on the compilation mode.
-You can control that with `GOARCH`{3} environment variable.
+In **64-bit** mode you can not use instructions with `Q` suffix.
+Effectively, this means that you can not treat registers like `AX` as 64-bit wide.
+Read about `GOARCH`{3} for more information.
 
 ```lisp
-32-bit    | 64-bit   
-==================
+32-bit    | 64-bit only 
+=======================
 %eax      | %rax     <=> AX
 %ecx      | %rcx     <=> CX
 %edx      | %rdc     <=> DX
@@ -434,14 +421,7 @@ You can control that with `GOARCH`{3} environment variable.
    [Proposal 21528](https://github.com/golang/go/issues/21528) has discussion on related subject.
 
 3. Pseudo register `IZ` (`%riz`, `%eiz`) does not exist.  
-   [Issue 18792](https://github.com/golang/go/issues/18792), although indirectly, confirms that.
-
-## Expect even more differences in the future
-
-Go (1.9) assembler does not support AVX512 yet.
-There is no syntax support for masking registers.
-This can be another nuance you should keep in mind,
-because it is *unlikely* that the result will look as in AT&T.
+   [Issue 18792](https://github.com/golang/go/issues/18792), although indirectly, confirms that.ss
 
 ## External resources
 
@@ -452,3 +432,4 @@ This is "further reading" section.
 - [2] [Manual for the Plan 9 assembler](https://9p.io/sys/doc/asm.html) by Rob Pike.
 - [Quick Guide to Go's Assembler](https://golang.org/doc/asm) from go docs.
 - [3] [Go build docs: environment variables](https://golang.org/doc/install/source#environment).
+- [4] [AVX512 design](https://github.com/golang/go/issues/22779#issuecomment-345435884).
