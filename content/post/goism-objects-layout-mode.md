@@ -6,7 +6,7 @@ tags = [
     "[emacs lisp]",
     "[goism project]",
 ]
-description = "How Go objects represented inside Emacs."
+description = "How Go objects are represented inside Emacs."
 draft = false
 +++
 
