@@ -98,7 +98,7 @@ x := new(int) // x = (cons 0 ?)
 
 ## Pointers: reference types
 
-For reference types, the single level of indirection is the object itself.  
+For reference types (ref types for short), the single level of indirection is the object itself.  
 This means that `*T` has the same run-time representation as `T`.
 
 When object has non-pointer struct type, all assignments use `copy-sequence`.
@@ -135,7 +135,7 @@ Because `cdr` pointer part is always ignored, `(x y z)` is a valid pointer for `
 
 ## Pointers: non-reference types
 
-In Emacs Lisp, there are non-reference types; they are not mutable.  
+In Emacs Lisp, there are non-ref types; they are not mutable.  
 The solution to this is [inferior mutability](https://ricardomartins.cc/2016/06/08/interior-mutability).
 
 We apply boxing for all such values when they are not part of the struct
@@ -168,8 +168,8 @@ of the same static type.
 
 Proposed solution:
 
-* It is easy to return a pointer to reference type value. Permit this operation;
-* Forbid taking element address of non-reference types;
+* It is easy to return a pointer to ref type value. Permit this operation;
+* Forbid taking element address of non-ref types;
 
 This is a trade-off between performance and Go spec compliance.  
 Enabling this feature without constraints will make arrays (and slices)
@@ -191,7 +191,7 @@ Escape analysis is performed as the last part of optimizations.
 It's aim is to find data that is never used in a way that forces us to
 generate less efficient code.
 
-For example, if address operator is never applied to local non-reference type
+For example, if address operator is never applied to local non-ref type
 variable, there is no need to box it.
 
 Go structures that have particular layout can be optimized if
