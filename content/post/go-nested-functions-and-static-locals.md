@@ -47,7 +47,7 @@ It is not overly complex, but in order to define it,
 programmer also introduced `hasVowel` helper function,
 which requires `vowels` global variable.
 `describeString` has to check a string against
-regular expression, so it was assigned to `rxGolang`,
+regular expression, so it was assigned to `golangRE`,
 this removes a need to compile regexp during each function call.
 
 ```go
@@ -55,7 +55,7 @@ var vowels = map[rune]bool{
     'a': true, 'e': true, 'i': true,
     'o': true, 'u': true, 'y': true,
 }
-var rxGolang = regexp.MustCompile(`[Gg]o|[Gg]golang`)
+var golangRE = regexp.MustCompile(`\b[Gg]o(?:lang)?\b`)
 func hasVowel(s string) bool {
     for _, c := range s {
         if vowels[c] {
@@ -69,7 +69,7 @@ func describeString(s string) string {
     if hasVowel(s) {
         attrs = append(attrs, "has vowel letter")
     }
-    if rxGolang.MatchString(s) {
+    if golangRE.MatchString(s) {
         attrs = append(attrs, "may be about Go language")
     }
     attrs = append(attrs, fmt.Sprintf("has length of %d", len(s)))
@@ -86,7 +86,7 @@ var describeString = func() func(string) string {
         'a': true, 'e': true, 'i': true,
         'o': true, 'u': true, 'y': true,
     }
-    rxGolang := regexp.MustCompile(`[Gg]o|[Gg]golang`)
+    golangRE := regexp.MustCompile(`\b[Gg]o(?:lang)?\b`)
     hasVowel := func(s string) bool {
         for _, c := range s {
             if vowels[c] {
@@ -101,7 +101,7 @@ var describeString = func() func(string) string {
         if hasVowel(s) {
             attrs = append(attrs, "has vowel letter")
         }
-        if rxGolang.MatchString(s) {
+        if golangRE.MatchString(s) {
             attrs = append(attrs, "may be about Go language")
         }
         attrs = append(attrs, fmt.Sprintf("has length of %d", len(s)))
