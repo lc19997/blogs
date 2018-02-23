@@ -7,7 +7,7 @@ tags = [
     "[error handling]",
 ]
 description = "Making verbose code simpler by wrapping interface methods."
-draft = false
+draft = true
 +++
 
 ## io.Writer
