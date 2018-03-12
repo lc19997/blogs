@@ -421,6 +421,15 @@ Read about `GOARCH`{3} for more information.
 %r8d-r15d | %r8-%r15 <=> R8-R15
 ```
 
+## Syntax oddities
+
+1. The `REG0:REG1` syntax expands into 2 register operands, in reverse order.  
+   So, `MOVL AX:DX` becomes `MOVL DX, AX`.  
+   The latter syntax is recommended.
+
+2. It's almost always OK to add `*` in front of register.  
+   `MOVL *DX, *AX` is the same as `MOVL DX, AX`.
+
 ## Forbidden constructions
 
 1. You can not use SIB addressing without explicit S-scale.  
