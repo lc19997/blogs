@@ -5,7 +5,7 @@ tags = [
     "[go]",
     "[asm]",
 ]
-description = "Let me show you how dispatch table can be done in Go asm"
+description = "Bytecode interpreter in Go asm using direct threading for dispatching."
 draft = false
 +++
 
