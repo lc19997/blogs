@@ -184,6 +184,46 @@ $ go build -o eval.exe . && ./eval.exe
 2
 ```
 
+## Pure Go solution
+
+Without assembly, dispatching would require loop+switch:
+
+```go
+func eval(opbytes []byte) int64 {
+	acc := int64(0)
+	pc := 0
+	// It's not always the case that instruction consume exactly 1 byte.
+	// Some instructions may expect immediate bytes right after the opcode.
+	// This is why we're maintaining pc manually instead of using range over
+	// the opbytes. If you have fixed-length instructions, range loop
+	// will be more efficient because it may eliminate all boundary
+	// checks into opbytes.
+	for {
+		switch opbytes[pc] {
+		case opExit:
+			return acc
+		case opAdd1:
+			acc++
+			pc++
+		case opSub1:
+			acc--
+			pc++
+		case opZero:
+			acc = 0
+			pc++
+		}
+	}
+	return 0
+}
+```
+
+This is not direct threading anymore.
+
+If number of opcodes is high enough, table dispatch will be consistently faster on most machines.
+The recomendation is, as usual: measure before making final decisions.
+
+There is also indirect threading, but it's usually measurably slower due to function calls.
+
 ## Why additional MOVQ in next_op?
 
 Direct translation of `next_op` would be:
