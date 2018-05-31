@@ -3,7 +3,8 @@
 DATA op_labels<>+0(SB)/8, $op_exit(SB)
 DATA op_labels<>+8(SB)/8, $op_add1(SB)
 DATA op_labels<>+16(SB)/8, $op_sub1(SB)
-GLOBL op_labels<>(SB), (RODATA|NOPTR), $24
+DATA op_labels<>+24(SB)/8, $op_zero(SB)
+GLOBL op_labels<>(SB), (RODATA|NOPTR), $32
 
 #define next_op \
   MOVBQZX (CX), DX \
@@ -13,7 +14,6 @@ GLOBL op_labels<>(SB), (RODATA|NOPTR), $24
 
 TEXT ·eval(SB), NOSPLIT, $0-16
   MOVQ opbytes+0(FP), CX //; Set up program counter (PC)
-  XORQ AX, AX            //; Accumulator always starts with 0
   next_op                //; Start the evaluation
 
 TEXT op_exit(SB), NOSPLIT, $0-0
@@ -28,3 +28,6 @@ TEXT op_sub1(SB), NOSPLIT, $0-0
   SUBQ $1, AX
   next_op
 
+TEXT op_zero(SB), NOSPLIT, $0-0
+  XORQ AX, AX
+  next_op

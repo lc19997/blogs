@@ -9,9 +9,10 @@ func main() {
 		opExit = iota
 		opAdd1
 		opSub1
+		opZero
 	)
-	prog := []byte{ 
-        // Start with 0
+	prog := []byte{
+		opZero, // start with 0
 		opAdd1, // 0+1 = 1
 		opAdd1, // 1+1 = 2
 		opSub1, // 2-1 = 1
@@ -20,4 +21,3 @@ func main() {
 	}
 	fmt.Println(eval(&prog[0])) // Should print 2
 }
-

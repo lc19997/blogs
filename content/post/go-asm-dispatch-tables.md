@@ -20,27 +20,37 @@ In interpreters, this technique is often used as an alternative to switch-based 
 It's called direct threading in that domain. Each opcode corresponds to table index that contains machine
 code address that can execute operation specified by the opcode.
 
+> Note that a few `CMP` and jumps can perform better than small dispatch tables.  
+> With big N, tables win consistently.
+
 ## Threaded code in Intel syntax
 
 Suppose we're implementing some virtual machine for a toy programming language.
 
-All our VM can do is to add and substract from `AX` (`rax`) register.  
-Suppose `CX` (`rcx`) always points to opcode stream, it's our program counter.
+Here is it's specification:
+
+* Has one implicit operand: accumulator register. Mapped to `AX` (`rax`).
+* Bytecode pointer stored in `CX` (`rcx`). It's a program counter.
+* Supported operations are: `add1`, `sub1`, and `zero`.
 
 With [nasm](https://www.nasm.us/) and Intel syntax, our code could look like this:
 
 ```x86asm
+;; Dispatch table itself.
 $op_labels:
   dq op_exit ;; Stop the evaluation
   dq op_add1 ;; Add 1 to RAX
   dq op_sub1 ;; Sub 1 from RAX
+  dq op_zero ;; Set RAX to 0
 
+;; Instructions required to fetch and "call" next opcode.
 %macro next_op 0
   movzx rdx, byte [rcx]        ;; Fetch opcode
   add rcx, 1                   ;; Advance PC (inc instruction is OK here too)
   jmp [$op_labels + (rdx * 8)] ;; Execute the operation
 %endmacro
 
+;; Evaluation entry point.
 eval:
   next_op
 
@@ -48,11 +58,15 @@ op_exit:
   ret
 
 op_add1:
-  add rax, 1
+  add rax, 1 ;; Or `inc rax`
   next_op
 
 op_sub1:
-  sub rax, 1
+  sub rax, 1 ;; Or `dec rax`
+  next_op
+
+op_zero:
+  xor rax, rax ;; Or `mov rax, 0`
   next_op
 ```
 
@@ -70,7 +84,9 @@ It's also not possible to store label address into anything.
 DATA op_labels<>+0(SB)/8, $op_exit(SB)
 DATA op_labels<>+8(SB)/8, $op_add1(SB)
 DATA op_labels<>+16(SB)/8, $op_sub1(SB)
-GLOBL op_labels<>(SB), RODATA|NOPTR, $24
+DATA op_labels<>+24(SB)/8, $op_zero(SB)
+//; 4 table entries, size is 4*8.
+GLOBL op_labels<>(SB), (RODATA|NOPTR), $32
 ```
 
 Macros are akin to C.  
@@ -100,27 +116,32 @@ TEXT op_add1(SB), NOSPLIT, $0-0
 TEXT op_sub1(SB), NOSPLIT, $0-0
   SUBQ $1, AX
   next_op
+
+TEXT op_zero(SB), NOSPLIT, $0-0
+  XORQ AX, AX
+  next_op
 ```
 
-Note that all routines defined above have zero size frame and parameters space.
-This is to emphasise that those functions are not `CALL`'ed but rather `JMP`'ed into.
+> All routines defined above have zero size frame and parameters space.
+> This is to emphasise that those functions are not `CALL`'ed but rather `JMP`'ed into.
 
 The last thing is entry point, `eval` function.
 It's signature in Go would look like this:
 
 ```go
+// eval executes opbytes and returns accumulator value after evaluation ends.
+// opbytes must have trailing 0 byte (opExit).
 func eval(opbytes *byte) int64
 ```
 
 For asm, it's important to consider stack frame size and parameters width.
 These are shared among all opcode executing routines.
-We don't need stack frame, 16 bytes for input pointer and output int64.
+We don't need stack frame, only 16 bytes for input pointer and output int64.
 (Our code is for 64-bit platform only, but you can make it more portable.)
 
 ```x86asm
 TEXT ·eval(SB), NOSPLIT, $0-16
   MOVQ opbytes+0(FP), CX //; Set up program counter (PC)
-  XORQ AX, AX            //; Accumulator always starts with 0
   next_op                //; Start the evaluation
 ```
 
@@ -136,8 +157,10 @@ func main() {
 		opExit = iota
 		opAdd1
 		opSub1
+		opZero
 	)
-	prog := []byte{
+	prog := []byte
+		opZero,
 		opAdd1,
 		opAdd1,
 		opSub1,
@@ -154,8 +177,12 @@ Code generation can help here.
 
 See [eval.go](/blog/code/eval.go) for complete Go code.
 
-If you put `eval.go` and `eval_amd64.s` in one directory, running  
-`$ go build -o eval.exe . && ./eval.exe` should be enough to execute the program.
+Put `eval.go` and `eval_amd64.s` in a new directory and run it:
+
+```bash
+$ go build -o eval.exe . && ./eval.exe
+2
+```
 
 ## Why additional MOVQ in next_op?
 
