@@ -159,7 +159,7 @@ func main() {
 		opSub1
 		opZero
 	)
-	prog := []byte
+	prog := []byte{
 		opZero,
 		opAdd1,
 		opAdd1,
