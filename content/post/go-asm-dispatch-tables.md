@@ -145,7 +145,7 @@ TEXT ·eval(SB), NOSPLIT, $0-16
   next_op                //; Start the evaluation
 ```
 
-See [eval_amd64.s](/blog/code/eval_amd64.s) for complete asm code.
+See [eval_amd64.s](/blog/code/eval/eval_amd64.s) for complete asm code.
 
 ## Calling eval from Go
 
@@ -175,7 +175,7 @@ Constants defined purely for convenience reasons.
 It is important to keep definitions in sync with asm implementation.
 Code generation can help here.
 
-See [eval.go](/blog/code/eval.go) for complete Go code.
+See [eval.go](/blog/code/eval/eval.go) for complete Go code.
 
 Put `eval.go` and `eval_amd64.s` in a new directory and run it:
 
