@@ -46,10 +46,10 @@ paginate = 10
 	name = "Iskander Sharipov"
 	bio = "Lisper that lost in a gophers land"
 	description = "Technical blog about programming and related topics"
-	
+
 	# Link your social networks (optional)
 	location = ""
-	twitter = ""
+	twitter = "quasilyte"
 	linkedin = "quasilyte"
 	googleplus = ""
 	facebook = ""
