@@ -30,7 +30,7 @@ paginate = 10
 
 [params]
 	title = "Quasilyte blog"
-	subtitle = "83% technical. 0% emotional."
+	subtitle = "83% technical. NaN% emotional."
 	copyright = "Released under the MIT license."
 
 	# You can choose between green, orange, red and blue.
