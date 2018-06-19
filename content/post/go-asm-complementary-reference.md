@@ -358,6 +358,17 @@ instructions["MOVD"] = x86.AMOVQ
 
 [Go 1.9 x86 alias list](/blog/files/go_x86_aliases.txt) file is provided for convenience.
 
+As of June 2018, x86.csv mentioned above does not provide correct syntax for some Go instructions.
+
+## Known issues
+
+List below is a hand-written collection of known issues:
+
+* `FIADD m16int` is `FADDW`, but disassembled as `FIADD`
+* `FIADD m32int` is `FADDL`, but disassembled as `FIADD`
+* [Issue 20111](https://github.com/golang/go/issues/20111): `CMOVLGE` and `CMOVQGE` as `CMOVGE`
+* [Issue 23386](https://github.com/golang/go/issues/23386): `FSAVE` assembled into `FNSAVE`; Real `FSAVE` is not implemented
+
 ## Register names
 
 Tables below map AT&T <=> Go register names.
@@ -439,7 +450,7 @@ Read about `GOARCH`{3} for more information.
    [Proposal 21528](https://github.com/golang/go/issues/21528) has discussion on related subject.
 
 3. Pseudo register `IZ` (`%riz`, `%eiz`) does not exist.  
-   [Issue 18792](https://github.com/golang/go/issues/18792), although indirectly, confirms that.ss
+   [Issue 18792](https://github.com/golang/go/issues/18792), although indirectly, confirms that.
 
 ## External resources
 
