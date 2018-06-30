@@ -176,7 +176,7 @@ Sometimes it is required to specify form type explicitly. Type is specified insi
 ```
 
 In addition to types, there are also "symbols" (or, more generally, `Aux` properties).
-```list
+```lisp
 (StaticCall [argsWidth] {target} mem) -> (CALLstatic [argsWidth] {target} mem)
 ```
 
