@@ -25,7 +25,7 @@ Only English content is referenced (original + translated).
   It describes how to use all AVX-512 special features in Go assembly syntax as well as some encoder details.
   Contains some examples.
 
-* [Disassembling Go AVX-512](/post/disassembling-go-avx512):
+* [Disassembling Go AVX-512](/blog/post/disassembling-go-avx512):
   how to disassemble and inspect AVX-512 machine code (given that `go tool objdump` can't do it).
 
 * [Hardware counters collector](https://github.com/intel-go/avx512counters):
