@@ -20,7 +20,7 @@ Only English content is referenced (original + translated).
 
 ## Documentation
 
-* [AVX-512 support in Go assembler](https://software.intel.com/en-us/articles/avx-512-support-in-go-assembler):
+* [AVX-512 support in Go assembler](https://github.com/golang/go/wiki/AVX-512-support-in-Go-assembler):
   short reference that focuses on Go-specific implementation of AVX-512.
   It describes how to use all AVX-512 special features in Go assembly syntax as well as some encoder details.
   Contains some examples.
