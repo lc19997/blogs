@@ -27,3 +27,7 @@ Only English content is referenced (original + translated).
 
 * [Disassembling Go AVX-512](/post/disassembling-go-avx512):
   how to disassemble and inspect AVX-512 machine code (given that `go tool objdump` can't do it).
+
+* [Hardware counters collector](https://github.com/intel-go/avx512counters):
+  a program that runs all supported AVX-512 instructions on your machine and records turbo state perf events.
+  There are pre-built example tables like [avx512_core_i9_7900x.csv](https://github.com/intel-go/avx512counters/blob/master/avx512_core_i9_7900x.csv).
