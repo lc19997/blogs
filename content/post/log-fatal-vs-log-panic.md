@@ -9,6 +9,8 @@ description = "tl;dr: avoid `os.Exit` near deferred calls."
 draft = false
 +++
 
+> Update: probably the best alternative to `log.Fatalf` inside `main` is `log.Printf` followed by a return statement. If your main function contains a lot of such exit points, consider using a [step driven evaluation](https://quasilyte.github.io/blog/post/step-pattern/) pattern.
+
 I personally don't like `log.Fatal/Fatalf/Fatalln`. I feel sad because of their ubiquity in Go examples as a form of reaction to an error. I personally prefer `log.Panic`.
 
 The `log.Panic` vs `log.Fatal` is essentially `panic` vs `os.Exit(1)`. The latter will not let deferred calls to run. Most of the time, it's not what you want. It also makes testing much harder. It's quite simple to stop panic in test by the means of `recover`. It's much harder to cope with a code that does `os.Exit` somewhere while you're trying to do end2end testing without loosing coverage info.
