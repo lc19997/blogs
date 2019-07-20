@@ -1,5 +1,5 @@
 Sources that are used to build https://github.com/Quasilyte/quasilyte.github.io.  
-The site itself can be found here: https://quasilyte.github.io/blog/.
+The site itself can be found here: https://quasilyte.dev/blog/.
 
 Some information:
 - [Hugo](https://github.com/gohugoio/hugo) static site generator
