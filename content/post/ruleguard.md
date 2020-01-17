@@ -172,7 +172,7 @@ We'll get to the more exciting examples now, but you should already see the diff
 
 There is a [rangeExprCopy](https://go-critic.github.io/overview#rangeExprCopy-ref) checker in `go-critic` linter. It finds potentially unwanted array copying.
 
-Вот этот код итерируется по **копии** массива:
+This code is iterated over a **copy** of the array:
 
 ```go
 var xs [2048]byte
