@@ -357,7 +357,7 @@ To make parser creation less expensive, you can initialize a "grammar" object se
 
 Separate precedence tables can be avoided with a structure that holds both a parselet and associated operation priority. It's also possible to make both parselets an `interface` and define a separate type for every parselet kind.
 
-## Conclusion
+## Closing words
 
 Pratt parsers became my favorite way to build hand-written parsers. I wanted to write a simple example in Go and share it with the world for quite a long time now. I finally did it, I guess.
 
