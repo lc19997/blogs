@@ -30,7 +30,7 @@ paginate = 10
 
 [params]
 	title = "Quasilyte blog"
-	subtitle = "83% technical. NaN% emotional."
+	subtitle = "Technical blog about systems programming and related topics"
 	copyright = "Released under the MIT license."
 
 	# You can choose between green, orange, red and blue.
@@ -44,8 +44,8 @@ paginate = 10
 	# To provide some metadata for search engines and the about section in the footer
 	# feel free to add a few information about you and your website.
 	name = "Iskander Sharipov"
-	bio = "Lisper that lost in a gophers land"
-	description = "Technical blog about programming and related topics"
+	bio = "Lisper that got lost in a gophers land"
+	description = "Technical blog about systems programming and related topics"
 
 	# Link your social networks (optional)
 	location = ""
