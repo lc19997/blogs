@@ -1,0 +1,465 @@
++++
+date = "Sat Jun 20 10:41:50 MSK 2020"
+title = "Calling Go funcs from asm and JITed code"
+tags = [
+    "[go]",
+    "[habr-translation]",
+    "[asm]",
+    "[jit]",
+]
+description = "Learn how to avoid fatal errors when calling Go functions from the asm code."
+draft = false
++++
+
+<center>If you found a typo or a misspelling, please [file an issue](https://github.com/quasilyte/blog-src/issues/new) or send a PR that fixes it.</center>
+
+![](https://hsto.org/webt/ep/4u/el/ep4uelswcffwgq9yfqkyuvcy5bu.png)
+
+> Original (ru): https://habr.com/ru/post/489482/.
+
+# Intro
+
+As long as your assembler code does something simple, you're golden.
+
+As soon as you'll need to call a Go function from it, the first suggestion that you'll probably get: don't do it. Perhaps you would like to follow that advice, especially if you're unsure why you needed it in the first place.
+
+But what if you can't avoid that? Read-on, we have a cure.
+
+> You've run into a really hairy area of asm code.
+> My first suggestion is not try to call from assembler into Go. -- [Ian Lance Taylor](https://groups.google.com/d/msg/golang-nuts/a6NKBbL9fX0/SuMDpME-AgAJ)
+
+# The Go calling convention
+
+The first thing that we need to understand is [how to pass function arguments and get its result](https://en.wikipedia.org/wiki/Calling_convention).
+
+I would recommend the [Go functions in assembly language](https://github.com/golang/go/files/447163/GoFunctionsInAssembly.pdf) by [Michael Munday](https://twitter.com/MikeMunday).
+
+Normally, the calling convention is a very platform-dependent thing. We'll dig into `GOARCH=amd64` because this is what I'm most familiar with.
+
+Here are some facts:
+
+* All arguments are passed via the stack, expect the "context" in closures which occupies `DX` (%rdx) register.
+* Function results are returned via the stack.
+* Callee arguments are stored on the caller frame side.
+* Frame allocation and de-allocation is performed by the callee. These actions are performed by the prologues and epilogues. Go assembler inserts them automatically.
+
+If there is not enough goroutine stack space, it will be extended. During that process, Go tries to fix pointers to the stack, so your program can work without knowing that anything changed.
+
+![](https://hsto.org/webt/kb/jk/hy/kbjkhyjugizyb1weh2haraas7qy.png)
+
+This picture may become outdated if the [register-based calling convention](https://github.com/golang/go/issues/18597) will be adopted.
+
+We'll try to call `gofunc` from the `asmfunc`:
+
+```go
+package main
+
+func asmfunc(x int32) (int32, int32)
+
+func gofunc(a1 int64, a2, a3 int32) (int32, int32) {
+	return int32(a1) + a2, int32(a1) + a3
+}
+
+func main() {
+	v1, v2 := asmfunc(10)
+	println(v1, v2) // => 3, 11
+}
+```
+
+The `asmfunc` is defined as:
+
+```x86asm
+//; func asmfunc(x int32) (int32, int32)
+TEXT ·asmfunc(SB), 0, $24-12
+  MOVL x+0(FP), AX
+  MOVQ $1, 0(SP)  //; First argument (a1 int64)
+  MOVL $2, 8(SP)  //; Second argument (a2 int32)
+  MOVL AX, 12(SP) //; Third argument (a3 int32)
+  CALL ·gofunc(SB)
+  MOVL 16(SP), AX //; Get first result
+  MOVL 20(SP), CX //; Get second result
+  MOVL AX, ret+8(FP)  //; Return first result
+  MOVL CX, ret+12(FP) //; Return second result
+  RET
+```
+
+```
+$24-16 (locals=24 bytes, args=16 bytes)
+
+          0     8     12    16     20     SP
+locals=24 [a1:8][a2:4][a3:4][ret:4][ret:4]
+(ret belongs to asmfunc frame, it stores gofunc results)
+
+        0    4          8      12     FP
+args=16 [x:4][padding:4][ret:4][ret:4]
+(ret belongs to main frame, it stores asmfunc results)
+```
+
+Note that there is 4-byte padding between the function arguments and its result for the alignment. Go requires function results to be pointer-aligned (8-byte on x64-64).
+
+Every argument is aligned, just like fields in a struct.
+
+If the first argument is `int32` and the second is `int64`, then the offset of the latter will be 8 instead of 4. This is more or less consistent with `reflect.TypeOf(T).Align()` result.
+
+Some mistakes related to the function frame size and `FP` register usage can be found with `go vet` (asmdecl).
+
+If you try to call `gofunc`, there should be no problems. But don't relax just yet.
+
+# Pointers and the stackmap
+
+Let's try to call a Go function with a pointer argument.
+
+```go
+package foo
+
+import (
+	"fmt"
+	"testing"
+)
+
+func foo(ptr *object)
+
+type object struct {
+	x, y, z int64
+}
+
+func printPtr(ptr *object) {
+	fmt.Println(*ptr)
+}
+
+func TestFoo(t *testing.T) {
+	foo(&object{x: 11, y: 22, z: 33})
+}
+```
+
+```x86asm
+TEXT ·foo(SB), 0, $8-8
+  MOVQ ptr+0(FP), AX
+  MOVQ AX, 0(SP)
+  CALL ·printPtr(SB)
+  RET
+```
+
+If we run that test, [we'll get a panic](https://groups.google.com/d/msg/golang-nuts/a6NKBbL9fX0/MzUGGqQ9AgAJ):
+
+```
+=== RUN   TestFoo
+runtime: frame <censored> untyped locals 0xc00008ff38+0x8
+fatal error: missing stackmap
+```
+
+In order to successfully find pointers on the stack, GC needs the help of so-called stackmaps. For normal Go functions, stackmaps are generated by the compiler. Assembler functions don't have this information.
+
+Well, we can have **partial** with the help of the "function stubs" (Go prototypes) with the correct types. The [documentation](https://golang.org/doc/asm) also mentions cases where the stackmap is not necessary, but we need one in our program as it gently crashes without it.
+
+There are at least 3 approaches we can try to take from here:
+
+* Try to make your asm function fall into the category where the stackmap is not needed (sometimes it's impossible).
+* Manually build a stackmap inside the asm function body (difficult and error-prone).
+* Use `NO_LOCAL_POINTERS` macro and pray that you know what you're doing.
+
+# NO_LOCAL_POINTERS macro
+
+If we add the `NO_LOCAL_POINTERS` to our asm function, it'll pass the test:
+
+```x86asm
+#include "funcdata.h"
+
+TEXT ·foo(SB), 0, $8-8
+  NO_LOCAL_POINTERS
+  MOVQ ptr+0(FP), AX
+  MOVQ AX, 0(SP)
+  CALL ·printPtr(SB)
+  RET
+```
+
+Now we need to understand the hows and whys.
+
+Why GC need to know which stack slots contain pointers? Let's assume that these pointers are coming from the caller, they are reachable from the code that called the assembler function. So it shouldn't be a problem that asm function local pointers are not considered to be "live".
+
+Pointers can point to the stack objects as well as to the heap objects. When a stack resize happens, all pointers to stack values need to be fixed. This is the responsibility of the runtime to adjust the affected pointers.
+
+All pointers that are passed to the assembler function "escape to the heap" in the terms of the escape analysis, so it's not that simple to have a pointer to a stack-allocated value inside the assembler function.
+
+> It's safe to use `NO_LOCAL_POINTERS` if all local pointers store heap-allocated addresses and they are reachable for the GC from somewhere else.
+
+With [non-cooperative preemption](https://github.com/golang/proposal/blob/master/design/24543-non-cooperative-preemption.md), it's good to keep in mind that [assembler functions with NO_LOCAL_POINTERS are not interrupted](https://go-review.googlesource.com/c/go/+/202337/).
+
+Another example of safe usage can be found [inside the Go runtime](https://github.com/golang/go/blob/d67d044310bc5cc1c26b60caf23a58602e9a1946/src/runtime/vlop_arm.s#L147-L158). Functions that are marked with `go:nosplit` will not have a stack resize. Nosplit can be used only inside `runtime` package.
+
+# GO_ARGS macro
+
+For asm functions that have Go prototype, `GO_ARGS` is automatically inserted by the assembler.
+
+`GO_ARGS` is another macro from the [funcdata.h](https://golang.org/src/runtime/funcdata.h). It specifies that the arguments stackmap can be found inside a Go declaration.
+
+It didn't work in the past for the [functions defined in a different package](https://github.com/golang/go/issues/24419). Nowadays you don't need to manually place `args_stackmap` for the exported symbols.
+
+# GO_RESULTS_INITIALIZED macro
+
+If asm function has a pointer return value and it makes calls to Go functions, it should begin with result stack slots zeroing (as they may contain garbage) followed by a `GO_RESULTS_INITIALIZED` macro call.
+
+Example:
+
+```x86asm
+//; func getg() interface{}
+TEXT ·getg(SB), NOSPLIT, $32-16
+  //; Interface consists of two pointers.
+  //; Both of them need to be zeroed.
+  MOVQ $0, ret_type+0(FP)
+  MOVQ $0, ret_data+8(FP)
+  GO_RESULTS_INITIALIZED
+  //; The function body...
+  RET
+```
+
+In general, it's better to avoid asm functions that return a pointer result.
+
+You can find more `GO_RESULTS_INITIALIZED` examples [by using a GitHub search](https://github.com/search?l=Unix+Assembly&q=GO_RESULTS_INITIALIZED&type=Code).
+
+# Calling Go funcs from JIT code
+
+Now for the most exciting part: calling a Go function from a dynamically generated machine code.
+
+Go GC expects that all code that makes a function calls is available during the compile time. That means that [Go doesn't play well with JITed code](https://github.com/golang/go/issues/20123).
+
+We'll start by reproducing a fatal error.
+
+```go
+// file jit.go
+package main
+
+import (
+	"log"
+	"reflect"
+	"syscall"
+	"unsafe"
+)
+
+func main() {
+	a := funcAddr(goFunc)
+
+	code := []byte{
+		// MOVQ addr(goFunc), AX
+		0xb8, byte(a), byte(a >> 8), byte(a >> 16), byte(a >> 24),
+		// CALL AX
+		0xff, 0xd0,
+		// RET
+		0xc3,
+	}
+
+	executable, err := mmapExecutable(len(code))
+	if err != nil {
+		log.Panicf("mmap: %v", err)
+	}
+	copy(executable, code)
+	callJIT(&executable[0])
+}
+
+func callJIT(code *byte)
+
+func goFunc() {
+	println("called from JIT")
+}
+
+// Extra (scary) code is hidden under the spoiler for brevity.
+```
+
+<details>
+<summary>Helper functions</summary>
+
+```go
+func mmapExecutable(length int) ([]byte, error) {
+	const prot = syscall.PROT_READ | syscall.PROT_WRITE | syscall.PROT_EXEC
+	const flags = syscall.MAP_PRIVATE | syscall.MAP_ANON
+	return mmapLinux(0, uintptr(length), prot, flags, 0, 0)
+}
+
+func mmapLinux(addr, length, prot, flags, fd, off uintptr) ([]byte, error) {
+	ptr, _, err := syscall.Syscall6(
+		syscall.SYS_MMAP,
+		addr, length, prot, flags, fd, offset)
+	if err != 0 {
+		return nil, err
+	}
+	slice := *(*[]byte)(unsafe.Pointer(&reflect.SliceHeader{
+		Data: ptr,
+		Len:  int(length),
+		Cap:  int(length),
+	}))
+	return slice, nil
+}
+
+func funcAddr(fn interface{}) uintptr {
+	type emptyInterface struct {
+		typ   uintptr
+		value *uintptr
+	}
+	e := (*emptyInterface)(unsafe.Pointer(&fn))
+	return *e.value
+}
+```
+
+</details>
+
+```x86asm
+// file jit_amd64.s
+TEXT ·calljit(SB), 0, $0-8
+    MOVQ code+0(FP), AX
+    JMP AX
+```
+
+If you build and run that program, it'll look like everything works fine:
+
+```bash
+$ go build -o jit . && ./jit
+called from JIT
+```
+
+With a single line addition to a `goFunc`, we can make our program crash:
+
+```diff
+ func goFunc() {
+ 	println("called from JIT")
++ 	runtime.GC()
+ }
+```
+
+```bash
+$ go build -o jit . && ./jit
+called from JIT
+runtime: unexpected return pc for main.goFunc called from 0x7f9465f7c007
+stack: frame={sp:0xc00008ced0, fp:0xc00008cef0} stack=[0xc00008c000,0xc00008d000)
+000000c00008cdd0:  0000000000000000  00007f94681f7558 
+000000c00008cde0:  000000c000029270  000000000000000b 
+... (+ more)
+```
+
+The "return PC" points to a JIT code that is unknown to the runtime, hence the error:
+
+![](/blog/img/jit_call1.png)
+
+If Go runtime doesn't want us to call a function from a JIT code, we'll call them from the places it can recognize.
+
+The second version of the `callJIT` will have a section that is responsible for the Go function call. Whenever we need to call a Go function we'll jump to that `gocall` section.
+
+
+```x86asm
+#include "funcdata.h"
+
+TEXT ·callJIT(SB), 0, $8-8
+    NO_LOCAL_POINTERS
+    MOVQ code+0(FP), AX
+    JMP AX
+gocall:
+    CALL CX
+    JMP (SP)
+```
+
+Some notable changes:
+
+* We need at least 8 extra frame bytes to write the origin return address
+* `NO_LOCAL_POINTERS` is needed due to the `CALL` and non-zero frame size
+
+The normal execution path for the `callJIT` is unchanged.
+
+`gocall` handles JIT->Go calls. We expect that the caller puts the callee function address into `CX` and the origin return address into `(SP)`.
+
+Now we need the `gocall` label address. I used the disassembler to get that, but maybe there is a more clear way to do it.
+
+The modified `main` is shown below.
+
+```go
+a := funcAddr(goFunc)
+j := funcAddr(calljit) + 36
+
+code := []byte{
+    // MOVQ funcAddr(goFunc), CX
+    0x48, 0xc7, 0xc1, byte(a), byte(a >> 8), byte(a >> 16), byte(a >> 24),
+    // MOVQ funcAddr(gocall), DI
+    0x48, 0xc7, 0xc7, byte(j), byte(j >> 8), byte(j >> 16), byte(j >> 24),
+    // LEAQ 6(PC), SI
+    0x48, 0x8d, 0x35, (4 + 2), 0, 0, 0,
+    // MOVQ SI, (SP)
+    0x48, 0x89, 0x34, 0x24,
+    // JMP DI
+    0xff, 0xe7,
+
+    // ADDQ $framesize, SP
+    0x48, 0x83, 0xc4, (8 + 8),
+    // RET
+    0xc3,
+}
+```
+
+The "call Go" code sequence:
+
+1. The callee address is stored in `CX`
+2. The `gocall` address is stored in `DI`
+3. The return address is evaluated to `SI`, then stored to `(SP)`<br>
+   4+2 is a width of `MOVQ` and `JMP` instructions that follow the `LEAQ`
+4. Then we jump to the `gocall`
+
+
+Our function now has a frame, so we need to do a cleanup before returning. 8 bytes for our frame plus 8 bytes for the `BP` spilling.
+
+```
+here we store the return address for gocall
+|
+|       Go stores the previous BP value here
+|       |
+0(SP)   8(SP)    16(SP)    24(SP)
+[empty] [prevBP] [retaddr] [arg1:code]
+|             /  |         |
+|            /   |         callJIT argument (caller frame)
+|           /    |      
+|          /     pushed by the CALL during the callJIT() call from main
+|         /
+callJIT frame, 16 bytes 
+```
+
+With that trampoline, Go runtime sees a known `callJIT` function in its call stack:
+
+![](/blog/img/jit_call2.png)
+
+```bash
+$ go build -o jit . && ./jit
+called from JIT
+```
+
+Success!
+
+This solution can be modified to call Go functions with arguments. All you need to do is to add some extra frame space in `callJIT` to put Go function arguments there.
+
+# Go internal ABI
+
+[Go Internal ABI](https://github.com/golang/proposal/blob/master/design/27539-internal-abi.md) is another hot topic.
+
+Long story short, Go may get a new `ABI` pretty soon. It's going to be versioned.
+
+The proposal highlighted two things:
+
+* The existing assembler code will continue to work correctly.
+* Older calling conventions will still be supported for the new code.
+
+The original Go calling convention is a part of `ABI0`.<br>
+The experimental calling convention is a part of `ABIInternal`.
+
+If we'll start a Go compilation with `-S` flag, it's possible to note that `ABIInternal` is already there (but it's very similar to `ABI0` right now):
+
+![](https://habrastorage.org/webt/yf/cz/ox/yfczox8dzfemakdghfoit5m14iu.png)
+
+When `ABIInternal` will be good enough, it'll be released as `ABI1` and the cycle will continue.
+
+The good news is that our assembler code should continue to work correctly, at least in the near future. On this optimistic note, I would like to finish this article.
+
+# Useful resources
+
+![](https://habrastorage.org/webt/q2/is/vu/q2isvuiycngnmodmqvefkv7bmfw.png)
+
+* [Go functions in assembly language](https://github.com/golang/go/files/447163/GoFunctionsInAssembly.pdf)
+* [Go internal ABI](https://github.com/golang/proposal/blob/master/design/27539-internal-abi.md)
+* [Stack frame layout on x86-64](https://eli.thegreenplace.net/2011/09/06/stack-frame-layout-on-x86-64)
+* [NO_LOCAL_POINTERS and stack addresses](https://groups.google.com/d/msg/golang-nuts/SxWxUG0uezY/YWXLSuesBQAJ)
+* [amd64 library that can be used for machine code generation](https://github.com/modern-go/amd64)
+* [Go assembly language complementary reference](https://quasilyte.dev/blog/post/go-asm-complementary-reference/)
