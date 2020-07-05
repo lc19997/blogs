@@ -330,7 +330,7 @@ If you have a new version of `golangci-lint` that includes [PR1148](https://gith
 To make it work, you must ensure that:
 
 1. `gocritic` linter is enabled
-2. `ruleguard` check is enabled
+2. `ruleguard` check is enabled as well
 3. `rules` parameter is set
 
 Here is a minimal example of `.golangci.yml` that satisfies these 3 conditions:
@@ -353,8 +353,8 @@ When you run `golangci-lint` with this configuration file, you should see warnin
 ```bash
 $ golangci-lint run example.go 
 example.go:5:9: ruleguard: can rewrite as xs[0] == ys[0] (gocritic)
-	return !(xs[0] != ys[0])
-	       ^
+        return !(xs[0] != ys[0])
+               ^
 ```
 
 When changing the rules file, you might need to do a cache cleanup once in a while:
@@ -363,7 +363,7 @@ When changing the rules file, you might need to do a cache cleanup once in a whi
 golangci-lint cache clean
 ```
 
-In general, it's easier to debug you rules with `ruleguard` binary, but for the integration purposes, `golangci-lint` is priceless.
+In general, it's easier to debug your rules with `ruleguard` binary, but for integration purposes, `golangci-lint` is priceless.
 
 # Closing words
 
