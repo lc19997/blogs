@@ -321,6 +321,50 @@ A diagnostic can have a list of [suggested fixes](https://godoc.org/golang.org/x
 
 More detailed description can be found inside [suggested_fixes.md design document](https://github.com/golang/tools/blob/master/go/analysis/doc/suggested_fixes.md).
 
+# Using from the golangci-lint
+
+[golangci-lint](https://github.com/golangci/golangci-lint) integrates `go-critic`, which in turn includes `ruleguard`.
+
+If you have a new version of `golangci-lint` that includes [PR1148](https://github.com/golangci/golangci-lint/pull/1148), you can use `ruleguard` through `golangci-lint`.
+
+To make it work, you must ensure that:
+
+1. `gocritic` linter is enabled
+2. `ruleguard` check is enabled
+3. `rules` parameter is set
+
+Here is a minimal example of `.golangci.yml` that satisfies these 3 conditions:
+
+```
+linters:
+  enable:
+    - gocritic
+linters-settings:
+  gocritic:
+    enabled-checks:
+      - ruleguard
+    settings:
+      ruleguard:
+        rules: "rules.go"
+```
+
+When you run `golangci-lint` with this configuration file, you should see warnings that come from the rules you defined:
+
+```bash
+$ golangci-lint run example.go 
+example.go:5:9: ruleguard: can rewrite as xs[0] == ys[0] (gocritic)
+	return !(xs[0] != ys[0])
+	       ^
+```
+
+When changing the rules file, you might need to do a cache cleanup once in a while:
+
+```bash
+golangci-lint cache clean
+```
+
+In general, it's easier to debug you rules with `ruleguard` binary, but for the integration purposes, `golangci-lint` is priceless.
+
 # Closing words
 
 ![](https://habrastorage.org/webt/m3/bs/zw/m3bszwzp2nwkxrnxdnenypatyjk.png)
@@ -337,7 +381,6 @@ Here are some ideas on how you can use `ruleguard`:
 
 `ruleguard` development plans:
 
-* Integrate `ruleguard` into [go-critic](https://github.com/go-critic/go-critic) as another way to extend it.
 * Test ideas from [Applied Go code similarity analysis](https://github.com/quasilyte/talks/tree/master/2019-7-Oct-moscow) ([code normalization](https://github.com/quasilyte/astnorm))
 * Add new DSL features. [sub-matches](https://github.com/quasilyte/go-ruleguard/issues/28) is one of the examples.
 * Borrow and adapt ideas from [CodeQL](https://github.com/github/codeql-go) and [comby](https://comby.dev/).
