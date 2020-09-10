@@ -1,7 +1,7 @@
 baseURL = "https://quasilyte.dev/blog/"
 languageCode = "en-us"
 
-title = "Iskander Sharipov technical blog"
+title = "Iskander (Alex) Sharipov technical blog"
 theme = "hugo-steam-theme"
 
 disqusShortname = ""
@@ -29,7 +29,7 @@ paginate = 10
     url = "/post/faq/#report-an-issue"
 
 [params]
-	title = "Quasilyte blog"
+	title = "quasilyte blog"
 	subtitle = "Technical blog about systems programming and related topics"
 	copyright = "Released under the MIT license."
 
