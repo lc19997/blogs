@@ -387,6 +387,8 @@ Here are some ideas on how you can use `ruleguard`:
 
 # Useful links and resources
 
+* [Ruleguard by example](https://go-ruleguard.github.io/by-example/) is an example-based tutorial
+* [Ruleguard vs Semgrep vs CodeQL](https://speakerdeck.com/quasilyte/ruleguard-vs-semgrep-vs-codeql)
 * Recommended rules file example: [rules.go](https://github.com/quasilyte/go-ruleguard/blob/master/rules.go)
 * [dsl/fluent package docs](https://godoc.org/github.com/quasilyte/go-ruleguard/dsl/fluent)
 * [ruleguard package docs](https://godoc.org/github.com/quasilyte/go-ruleguard/ruleguard)
