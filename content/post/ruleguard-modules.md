@@ -45,7 +45,10 @@ It's possible to have several ruleguard files inside one Go module. Only one fil
 
 ## Importing a bundle
 
-A package that wants to extend some rule set should import that package and then use its bundle in [ImportRules()](https://godoc.org/github.com/quasilyte/go-ruleguard/dsl#ImportRules) call:
+To use an external rule set:
+
+1. Import the containing package
+2. In `init()` function, use its **Bundle** variable in [ImportRules()](https://godoc.org/github.com/quasilyte/go-ruleguard/dsl#ImportRules) call
 
 ```go
 package gorules
