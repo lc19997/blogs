@@ -11,7 +11,7 @@ description = "A quick intro into the ruleguard rules packaging."
 draft = false
 +++
 
-**Bundles** is a new feature coming to the [ruleguard](github.com/quasilyte/go-ruleguard). It'll make it possible to re-use third-party rules without having to copy/paste them.
+**Bundles** is a new feature coming to the [ruleguard](https://github.com/quasilyte/go-ruleguard). It'll make it possible to re-use third-party rules without having to copy/paste them.
 
 ## Creating an importable bundle
 
