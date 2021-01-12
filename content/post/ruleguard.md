@@ -52,7 +52,7 @@ Nowadays you're encouraged to use the above-mentioned analysis framework to crea
 
 [`go-ruleguard`](https://github.com/quasilyte/go-ruleguard) is a static analysis tool that includes **zero** inspections by default.
 
-Rule definitions are loaded during the start from a special `gorules` file which describes bad code patterns in a declarative way. For every such pattern, there is an associated message to be printed if the pattern would match. That file is an extension point and is intended to be edited by the users.
+Rule definitions are loaded during the start from a special ruleguard file which describes bad code patterns in a declarative way. For every such pattern, there is an associated message to be printed if the pattern would match. That file is an extension point and is intended to be edited by the users.
 
 You don't need to re-compile the linter driver (main) program just to register new checks. This is why we can call these rules [dynamic](https://medium.com/@vktech/noverify-dynamic-rules-for-static-analysis-8f42859e9253).
 
@@ -165,7 +165,7 @@ func callToGC(m dsl.Matcher) {
 }
 ```
 
-In my opinion, this approach is almost as terse as we can get without sacrificing the Go syntax which is useful for us to get tooling support when editing `gorules`.
+In my opinion, this approach is almost as terse as we can get without sacrificing the Go syntax which is useful for us to get tooling support when editing ruleguard files.
 
 We'll get to the more exciting examples now, but you should already see the difference.
 
@@ -250,7 +250,7 @@ rangecopy.go:12:20: builtins copy can be avoided with &builtins
 
 If we look into `rangecopy.go` again, we'll see the fixed result, because `ruleguard` was called with `-fix` argument.
 
-By the way, simpler rules can be debugged without `gorules` file:
+By the way, simpler rules can be debugged without ruleguard rules file:
 
 ```
 $ ruleguard -c 1 -e 'm.Match(`return -1`)' rangecopy.go
@@ -264,13 +264,13 @@ Thanks to the [singlechecker](https://godoc.org/golang.org/x/tools/go/analysis/s
 
 This option is a little bit weird: default value is `-c=-1` which means "no context lines" while `-c=0` gives you exactly one context line (the matched line itself).
 
-Some more notable features of `gorules`:
+Some more notable features of the DSL:
 
-* [Type templates](https://github.com/quasilyte/go-ruleguard/blob/master/docs/gorules.md#type-pattern-matching) to match expected types. For example, `map[$t]$t` describes all maps that have key type identical to the element type and `*[$len]$elem` matches all pointers to arrays.
-* There can be multiple rules inside one function. Functions themselves are called [rule groups](https://github.com/quasilyte/go-ruleguard/blob/master/docs/gorules.md#rule-group-statements).
+* [Type templates](https://github.com/quasilyte/go-ruleguard/blob/master/_docs/dsl.md#type-pattern-matching) to match expected types. For example, `map[$t]$t` describes all maps that have key type identical to the element type and `*[$len]$elem` matches all pointers to arrays.
+* There can be multiple rules inside one function. Functions themselves are called [rule groups](https://github.com/quasilyte/go-ruleguard/blob/master/_docs/dsl.md#rule-group-statements).
 * All rules inside a group are applied one after another, in the order they are defined. The first matched rule makes all remaining rules to be skipped for the matched node. This is needed in cases where patterns are defined with priorities in mind: when you want to rewrite `$x=$x+$y` to `$x+=$y` it would be desirable to have a higher priority pattern `$x=$x+1` that is rewritten to `$x++` instead of `$x+=1`.
 
-See more information about the DSL in [docs/gorules.md](https://github.com/quasilyte/go-ruleguard/blob/master/docs/gorules.md) file.
+See more information about the DSL in [_docs/dsl.md](https://github.com/quasilyte/go-ruleguard/blob/master/_docs/dsl.md) file.
 
 # Multi-rule function example
 
