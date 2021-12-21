@@ -1,0 +1,45 @@
+baseurl = "https://example.org/"
+languageCode = "en-us"
+title = "Steam - a minimal theme for Hugo"
+theme = "hugo-steam-theme"
+disqusShortname = "spf13"
+# Enable Google Analytics be inserting your tracking code
+googleAnalytics = ""
+# Number of posts per page
+paginate = 10
+
+[params]
+	title = "Steam"
+	subtitle = "a minimal theme for ~~Ghost~~ Hugo"
+	copyright = "Released under the MIT license."
+
+	# You can choose between green, orange, red and blue.
+	themecolor = "green"
+
+	# Link custom assets relative to /static
+	favicon   = "favicon.ico"
+	customCSS = []
+	customJS  = []
+
+	# To provide some metadata for search engines and the about section in the footer
+	# feel free to add a few information about you and your website.
+	name = "John Doe"
+	bio = "programmer - blogger - coffee aficionado"
+	description = "Your description of the blog"
+	
+	# Link your social networks (optional)
+	location = ""
+	twitter = "spf13"
+	linkedin = ""
+	googleplus = ""
+	facebook = ""
+	instagram = ""
+	github = "spf13"
+	gitlab = ""
+	bitbucket = ""
+
+	# Customize or translate the strings
+	keepReadingStr = "Keep reading"
+	backtotopStr = "Back to top"
+	shareStr = "Share"
+	pageNotFoundTitle = "404 - Page not found"

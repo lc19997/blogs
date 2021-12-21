@@ -1,0 +1,10 @@
+{{ define "main" }}
+    {{ $paginator := .Paginate .Site.RegularPages.ByDate.Reverse }}
+    {{ range $paginator.Pages }}
+        {{ if not .Params.hide }}
+           {{ .Render "summary" }}
+        {{ end }}
+    {{ end }}
+
+    {{ partial "pagination" . }}
+{{ end }}   

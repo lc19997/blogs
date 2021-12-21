@@ -1,0 +1,7 @@
+<footer class="site-footer">
+	<div class="inner">
+		{{ partial "social" . }}
+
+		<section class="copyright">&copy; {{now.Format "2006"}} <a href="{{ .Site.BaseURL }}">{{ .Site.Params.name }}</a>. {{ .Site.Params.copyright | markdownify }}</section>
+	</div>
+</footer>

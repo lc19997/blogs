@@ -1,0 +1,19 @@
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="{{ "js/index.js" | absURL }}"></script>
+<script src="{{ "js/smooth-scroll.min.js" | absURL }}"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.8.0/highlight.min.js"></script>
+{{ range .Site.Params.customJS }}
+<script src="{{ . | absURL }}"></script>
+{{ end }}
+
+<script>
+    smoothScroll.init({
+        speed: 800,
+        easing: 'easeInOutCubic',
+        updateURL: false,
+        offset: 125,
+    });
+</script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+{{ template "_internal/google_analytics.html" . }}
