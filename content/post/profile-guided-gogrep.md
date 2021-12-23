@@ -350,4 +350,16 @@ Rather than using a `$b.String()` inside a pattern, I introduced a `$m` variable
 
 Using pprof in this case could show that `bytes.(*Buffer).String` is a hot function, but this information itself is not very actionable. With gogrep, we can locate a code that can be improved by a transition from `bytes.Buffer` to `strings.Builder`.
 
+Here is another good example:
+
+```bash
+$ gogrep --heatmap cpu.out . \
+  'return $*_, errors.New($x)' \
+  '$$.IsHot() && $x.IsStringLit()'
+```
+
+In the big codebase, there could be hundreds, if not thousands, places where `errors.New()` is used. More often than not, you don't care about the performance of the error path. Unless that error path can be exploited by the users or your system can frequently have data inputs that result in an error. We may want to find this 0.1% of the cases that can (and they probably should) be optimized.
+
+Note that the example above also filters out the cases with dynamic error message creation, like `errors.New("db: " + msg)`. We only find the spots that can benefit from replacing a call with a global variable that is allocated only once.
+
 I hope that you'll have a lot of fun with this thing, just like I did.
