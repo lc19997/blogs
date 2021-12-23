@@ -159,6 +159,62 @@ $ perf-heatmap stat -filename buffer.go cpu.out
 * `L` is a local heat level
 * `G` is a global heat level
 
+## Heat levels by example
+
+Suppose that we have a CPU profile that has the following samples:
+
+| file | line | value |
+|---|---|---|
+| `a.go` | `10` | `100` |
+| `a.go` | `10` | `200` |
+| `a.go` | `13` | `200` |
+| `b.go` | `40` | `100` |
+| `b.go` | `40` | `300` |
+| `b.go` | `40` | `400` |
+| `b.go` | `49` | `100` |
+| `b.go` | `49` | `100` |
+| `b.go` | `50` | `500` |
+| `b.go` | `51` | `100` |
+
+The first step is to calculate the sum of all samples pointing to the same line:
+
+| file | line | total value |
+|---|---|---|
+| `a.go` | `10` | `300` |
+| `a.go` | `13` | `200` |
+| `b.go` | `40` | `800` |
+| `b.go` | `49` | `200` |
+| `b.go` | `50` | `500` |
+| `b.go` | `51` | `100` |
+
+To assign the global heat level, we need to sort all values in descending order and take the first N entries that go through the threshold. Let's take threshold=0.5 case for the first example. 3 entries made it into the topN%.
+
+| file | line | total value |
+|---|---|---|
+| +`b.go`+ | +`40`+ | +`800`+ |
+| +`b.go`+ | +`50`+ | +`500`+ |
+| +`a.go`+ | +`10`+ | +`300`+ |
+| `a.go` | `13` | `200` |
+| `b.go` | `49` | `200` |
+| `b.go` | `51` | `100` |
+
+If we set threshold to 0.9, we'll get 5 entries: 800, 500, 300, 200, 200.
+
+Assigning global levels among that group of 5 elements is simple:
+
+| file | line | total value | global heat level |
+|---|---|---|---|
+| `b.go` | `40` | `800` | 5 |
+| `b.go` | `50` | `500` | 4 |
+| `a.go` | `10` | `300` | 3 |
+| `a.go` | `13` | `200` | 2 |
+| `b.go` | `49` | `200` | 1 |
+| `b.go` | `51` | `100` | 0 |
+
+For 10 elements we would get 2 elements per heat level. For the cases when we can't split the elements as nicely, some approximation is used: 8 elements will form `[2, 1, 2, 1, 2]` buckets.
+
+For the local heat levels we would take a slice of the samples that belong to the file as opposed to using all samples from the profile. Every line gets annotated with both levels.
+
 ## gogrep + heatmap
 
 Now let's install a gogrep that includes heatmap support:
