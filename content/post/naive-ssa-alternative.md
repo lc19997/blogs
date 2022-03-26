@@ -7,7 +7,7 @@ tags = [
     "[shortread]",
     "[ssa]",
 ]
-description = "Peephole optimizations without SSA."
+description = "How to perform peephole optimizations without SSA."
 draft = false
 +++
 
@@ -17,21 +17,15 @@ Let's suppose that you're working on some small compiler-like project. At some p
 
 Then you realize that it's not enough to just have some IR that is suitable for modifications. It's important to apply only those optimizations that keep the code correct (or at least don't make it more broken than it was before). Hopefully, we're also making it faster or smaller along the way.
 
-Most likely, you're better off choosing something like the SSA form. SSA form comes with a few complexities that you'll have to deal with:
+Most likely, you're better off choosing something like the [SSA](https://en.wikipedia.org/wiki/Static_single_assignment_form) form. The SSA form comes with a few complexities that you'll have to deal with:
 
-1. SSA introduces a lot of "unique" slots*. You need to perform good dead store optimizations and register allocation later on to keep the number of slots minimal
+1. SSA introduces a lot of "unique" slots*. You need to perform good dead store eliminations and register allocation later on to keep the number of slots minimal
 2. You either need to insert phi nodes or make basic blocks parametrized (so they get outer values as arguments)
 3. SSA alone is not enough. You need some extra metadata, like the number of SSA value usages (most often you want to check whether `v.Uses == 1`)
 
 > (*) A slot is an abstract term for a place where we store some value. It could be someplace inside a stack, or a register, or a virtual register if we're talking about a VM with a potentially infinite amount of registers.
 
-Let's discuss the new issues one by one. We'll compare the state "before" and "after" the transition.
-
-(1) It's quite easy to allocate a nearly minimal amount of slots linearly while compiling the code directly from AST to the target code. The potential waste can be near 20-30%, but it's good enough for a simple algorithm. Good registers allocation algorithms can't reach the perfect scenario either anyway.
-
-(2) Phi nodes are OK since there is no way any SSA alternative can live without some kind of extra metadata encoded into the IR.
-
-(3) Storing the usages counter per variable is OK too. Otherwise, it will be necessary to recompute this value multiple times, making some benefits of the SSA form go away.
+Basically, you need to insert some merge points for the SSA values. It can be done with phi nodes or with parametrized basic blocks. It's not a big deal, but it can be messy for a small project that only wants to perform a few local optimizations. Maintaining the SSA invariant can end up being too messy.
 
 In this article, I'll try to describe a simpler approach that:
 
@@ -106,6 +100,9 @@ call println
 
 In reality, we need some extra information to infer that some slot is unique. Namely, we need to know where its lifetime ends. This can be done with pseudo varkill instructions.
 
+> The name "varkill" is borrowed from the Go compiler source code. It uses this pseudo node to
+> record that the variable lifetime has ended.
+
 When the compiler allocates the slots for intermediate results, it knows when their lifetime ends. This lifetime tomb can end up in the same basic block or somewhere else.
 
 ```ruby
@@ -119,16 +116,49 @@ call println
 varkill slot0 # <- slot0 is free after this point
 ```
 
-Now we can compute the unique slots with a linear algorithm, without any graph traversal:
+Here is another example, when temporary value outlives its block:
+
+```ruby
+return x || y
+
+# =>
+
+  move slot0 = x
+  jump_nz L0 slot0
+  move slot0 = y
+L0:
+  return slot0
+  varkill slot0
+```
+
+It's important to include the trailing varkill pseudo ops after the basic block exit instruction.
+So, the basic blocks for the code above can look like this:
+
+```ruby
+b0:
+  move slot0 = x
+  jump_nz L0 slot0
+  move slot0 = y
+
+b1: # L0
+  return slot0
+  varkill slot0
+```
+
+Note that varkill is a part of the `b1` block.
+
+To compute the unique slots within a block, we need to traverse it only once.
 
 * Go from the end of a basic block
 * Put all varkill IDs into a map
 * For every recorded ID, collect the number of reads
-* When reached recorded ID write, check the number of reads
+* When reached the recorded ID write, check the number of reads
     * If the number of reads is 0, this is a dead store
     * If the number of reads is 1, mark this slot and its usage as unique
     * Otherwise it's not a unique slot, remove ID from the map
 * When removing a var or marking it unique, an associated varkill should be removed
+
+> You don't really need a real map here. It's possible to write a zero alloc uniqs marking.
 
 After the first round of optimizations, we need to re-compute the unique slots.
 
