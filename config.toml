@@ -10,6 +10,9 @@ googleAnalytics = ""
 # Number of posts per page
 paginate = 10
 
+[markup.goldmark.renderer]
+unsafe=true
+
 [[menu.main]]
     name = "[Posts by tags]"
     weight = 10

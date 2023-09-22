@@ -145,6 +145,8 @@ func newGenerationsMap[T any](n int) *generationsMap[T] {
 
 Every element will have a generation counter (seq). The container itself will have its own counter. The container's counter starts with 1, while elements start with 0.
 
+<img src="/blog/img/genmap1.png" width="75%" height="75%" title="empty state">
+
 Both `get` and `set` operations look very similar to the slice version, but with a `seq` check.
 
 ```go
@@ -153,7 +155,13 @@ func (m *generationsMap[T]) Set(k uint, v T) {
 		m.elems[k] = generationsElem[T]{val: v, seq: m.seq}
 	}
 }
+```
 
+Setting the element means updating the element's counter to the container's counter along with the value.
+
+<img src="/blog/img/genmap2.png" width="75%" height="75%" title="set()">
+
+```go
 func (m *generationsMap[T]) Get(k uint) T {
 	if k < uint(len(m.elems)) {
 		el := m.elems[k]
@@ -168,7 +176,13 @@ func (m *generationsMap[T]) Get(k uint) T {
 
 If `seq` of the element is identical to the container's counter, then this element is defined. Otherwise, it doesn't matter what are the contents of this element.
 
-Setting the element means updating the element's counter to the container's counter.
+
+<table>
+	<tr>
+		<td><img src="/blog/img/genmap3.png" title="get() undefined"></td>
+		<td><img src="/blog/img/genmap4.png" title="get() defined"></td>
+	</tr>
+</table>
 
 You can probably already guess how `Reset` will look like:
 
@@ -202,7 +216,7 @@ It's definitely possible to use `uint8` or `uint16` for the `seq` field. That wo
 It's possible to make a generations-based set too. The `get` operation can be turned into `contains` with ease. With sets, only the counters are needed.
 
 ```go
-func (m *generationsSet) Get(k uint) bool {
+func (m *generationsSet) Contains(k uint) bool {
 	if k < uint(len(m.counters)) {
 		return m.counters[k] == m.seq
 	}
