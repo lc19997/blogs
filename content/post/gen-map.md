@@ -59,7 +59,7 @@ We'll analyze these choices today:
 * `map[uint16]T`
 * `[]T`
 * `sparseMap`
-* `generationsMap`
+* `genMap`
 
 The slice and map solutions do not fit our requirements, but we'll use them for a comparison.
 
@@ -83,7 +83,7 @@ Observations:
 * `sparse.get()` operation is ~2 times slower than slice
 * Generations map is almost as fast as a slice, but reset is much faster
 
-The sparse and generations map do not zero their data. Therefore, avoid storing pointers in there. These pointers will be "held" by the container for a potentially long period of time, causing memory leaks. I would only recommend using both sparse and generations-based data structures with simple pointer-free.
+The sparse and generations map do not zero their data during the `reset` operation. Therefore, avoid storing pointers in there. These pointers will be "held" by the container for a potentially long period of time, causing memory leaks. I would only recommend using both sparse and generations-based data structures with simple pointer-free.
 
 You can find the exact benchmarks code [here]((https://gist.github.com/quasilyte/a64bd66093c20c5e146b60e2cf3f3191)).
 
@@ -127,19 +127,19 @@ The `sparse.get()` operation also suffers from a double memory read.
 It's possible to use some of the ideas behind the sparse-dense map and create an even more specialized data structure.
 
 ```go
-type generationsElem[T any] struct {
+type genMapElem[T any] struct {
 	seq uint32
 	val T
 }
 
-type generationsMap[T any] struct {
-	elems []generationsElem[T]
+type genMap[T any] struct {
+	elems []genMapElem[T]
 	seq   uint32
 }
 
-func newGenerationsMap[T any](n int) *generationsMap[T] {
-	return &generationsMap[T]{
-		elems: make([]generationsElem[T], n),
+func newGenMap[T any](n int) *genMap[T] {
+	return &genMap[T]{
+		elems: make([]genMapElem[T], n),
 		seq:   1,
 	}
 }
@@ -152,9 +152,9 @@ Every element will have a generation counter (seq). The container itself will ha
 Both `get` and `set` operations look very similar to the slice version, but with a `seq` check.
 
 ```go
-func (m *generationsMap[T]) Set(k uint, v T) {
+func (m *genMap[T]) Set(k uint, v T) {
 	if k < uint(len(m.elems)) {
-		m.elems[k] = generationsElem[T]{val: v, seq: m.seq}
+		m.elems[k] = genMapElem[T]{val: v, seq: m.seq}
 	}
 }
 ```
@@ -164,7 +164,7 @@ Setting the element means updating the element's counter to the container's coun
 <img src="/blog/img/genmap2.png" width="75%" height="75%" title="set()">
 
 ```go
-func (m *generationsMap[T]) Get(k uint) T {
+func (m *genMap[T]) Get(k uint) T {
 	if k < uint(len(m.elems)) {
 		el := m.elems[k]
 		if el.seq == m.seq {
@@ -189,7 +189,7 @@ If `seq` of the element is identical to the container's counter, then this eleme
 You can probably already guess how `Reset` will look like:
 
 ```go
-func (m *generationsMap[T]) Reset() {
+func (m *genMap[T]) Reset() {
 	m.seq++
 }
 ```
@@ -197,7 +197,7 @@ func (m *generationsMap[T]) Reset() {
 Well, this is good enough for the most use cases, but there is a small chance that our `uint32` will overflow, making some undefined elements defined. Increasing the `seq` size to `uint64` could help, but it will increase the per-element size overhead. Instead, we can do a real clear operation once in `MaxUint32` resets.
 
 ```go
-func (m *generationsMap[T]) Reset() {
+func (m *genMap[T]) Reset() {
 	if m.seq == math.MaxUint32 {
 		m.seq = 1
 		clear(m.elems)
@@ -218,7 +218,7 @@ It's definitely possible to use `uint8` or `uint16` for the `seq` field. That wo
 It's possible to make a generations-based set too. The `get` operation can be turned into `contains` with ease. With sets, only the counters are needed.
 
 ```go
-func (m *generationsSet) Contains(k uint) bool {
+func (m *genSet) Contains(k uint) bool {
 	if k < uint(len(m.counters)) {
 		return m.counters[k] == m.seq
 	}
