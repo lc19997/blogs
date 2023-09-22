@@ -22,6 +22,8 @@ In fact, if your arrays are not that big (less than 0xffff bytes?), you might be
 
 In this article, I'll propose a different data structure that can replace a sparse-dense map (and set) if you don't need the iteration over the elements.
 
+> This discussion is not Go-specific, but I'll use Go in the examples.
+
 ## The Problem
 
 Let me start with a problem that we're trying to address.
@@ -66,10 +68,10 @@ Let's start by comparing the raw performance.
 
 | Data Structure | Set | Get | Reset |
 |-------------|------:|------:|-----:|
-| map         | (x16.8) 27988 | (x40.7) 15631 | 1002 |
-| slice       | 1665  | 686   | 4144 |
-| sparse      | (x6.8) 11347 | (x1.7) 1193  | 11   |
-| generations | (x1.2) 1978  | (x1.1) 781   | 16   |
+| map         | (x17.9) 47802 | (x28.6) 36922 | 1801 |
+| slice       | 2665  | 1289   | 6450 |
+| sparse      | (x6.7) 17859 | (x1.89) 2435  | 16   |
+| generations | (x1.1) 3068  | (x1.04) 1349   | 26   |
 
 Observations:
 
