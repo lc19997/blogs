@@ -5,6 +5,7 @@ tags = [
     "[go]",
     "[performance]",
     "[shortread]",
+    "[data-structure]",
 ]
 description = "A faster sparse-dense array, but without iteration."
 draft = false
@@ -213,9 +214,11 @@ It may sound fascinating, right? Well, you can't use this data structure as a dr
 
 You can add a length counter if you really need it, but that will add some extra overhead to the `set` operation. I would advise you not to do so. The main reason this structure can be so fast is its simplicity.
 
+The average memory usage will be higher, since a referenced sparse-dense implementation doesn't allocate `n` elements for the `dense` right away; it only allocates the entire `sparse` storage. So, if you only ever populate the array up to n/2, the approximate size usage would be 1.5n instead of a worst-case 2n scenario. The generations-based array would require the entire slice to be allocated right away, leading to a 2n memory usage scenario.
+
 ## Conclusion
 
-I used this structure in my [pathfinding](https://github.com/quasilyte/pathing/) library for Go. The results were great: 5-8% speedup just for a simple data structure change. Keep in mind that this library is already heavily optimized, so every couple of percentages count.
+I used this data structure in my [pathfinding](https://github.com/quasilyte/pathing/) library for Go. The results were great: 5-8% speedup just for a simple data structure change. Keep in mind that this library is already heavily optimized, so every couple of percentages count.
 
 In turn, this pathfinding library was used in a game I released on Steam: [Roboden](https://store.steampowered.com/app/2416030/Roboden/).
 
