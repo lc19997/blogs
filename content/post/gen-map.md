@@ -86,7 +86,7 @@ Observations:
 
 The sparse and generations map do not zero their data during the `reset` operation. Therefore, avoid storing pointers in there. These pointers will be "held" by the container for a potentially long period of time, causing memory leaks. I would only recommend using both sparse and generations-based data structures with simple pointer-free.
 
-You can find the exact benchmarks code [here]((https://gist.github.com/quasilyte/a64bd66093c20c5e146b60e2cf3f3191)).
+You can find the exact benchmarks code [here](https://gist.github.com/quasilyte/a64bd66093c20c5e146b60e2cf3f3191).
 
 Some benchmark notes:
 
